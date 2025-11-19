@@ -1,5 +1,5 @@
 import 'merchant.dart';
-import 'product.dart';
+import 'product_basic.dart'; // <== fix circular dependency
 
 class Listing {
   final String id;
@@ -7,7 +7,7 @@ class Listing {
   final int stock;
   final String shipping;
   final Merchant? merchant;
-  final Product? product;  // OK: optional
+  final ProductBasic? product;
 
   Listing({
     required this.id,
@@ -15,21 +15,36 @@ class Listing {
     required this.stock,
     required this.shipping,
     this.merchant,
-    this.product,  // OK: optional
+    this.product,
   });
 
   factory Listing.fromJson(Map<String, dynamic> json) {
     return Listing(
-      id: json['id'] as String,
-      price: double.parse(json['price'].toString()),
-      stock: json['stock'] as int,
-      shipping: (json['shipping'] as String?) ?? 'Standard delivery',
-      merchant: json['merchant'] != null 
-          ? Merchant.fromJson(json['merchant'] as Map<String, dynamic>) 
+      id: json['id']?.toString() ?? '',
+      price: _parseDouble(json['price']),
+      stock: json['stock'] ?? 0,
+      shipping: json['shipping'] ?? 'Standard delivery',
+      merchant: json['merchant'] != null
+          ? Merchant.fromJson(json['merchant'])
           : null,
-      product: json['product'] != null 
-          ? Product.fromJson(json['product'] as Map<String, dynamic>) 
-          : null,  // OK: returns Product? → matches field
+      product: json['product'] != null
+          ? ProductBasic.fromJson(json['product'])
+          : null,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'price': price,
+        'stock': stock,
+        'shipping': shipping,
+        'merchant': merchant?.toJson(),
+        'product': product?.toJson(),
+      };
+}
+
+double _parseDouble(dynamic v) {
+  if (v == null) return 0.0;
+  if (v is num) return v.toDouble();
+  return double.tryParse(v.toString()) ?? 0.0;
 }

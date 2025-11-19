@@ -13,12 +13,23 @@ class Merchant {
 
   factory Merchant.fromJson(Map<String, dynamic> json) {
     return Merchant(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      logoUrl: json['logoUrl'] as String?,
-      rating: json['rating'] is String 
-          ? double.tryParse(json['rating'] as String) ?? 0.0 
-          : (json['rating'] as num?)?.toDouble() ?? 0.0,
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? 'Unknown merchant',
+      logoUrl: json['logoUrl'],
+      rating: _parseDouble(json['rating']),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'logoUrl': logoUrl,
+        'rating': rating,
+      };
+}
+
+double _parseDouble(dynamic v) {
+  if (v == null) return 0.0;
+  if (v is num) return v.toDouble();
+  return double.tryParse(v.toString()) ?? 0.0;
 }
