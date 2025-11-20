@@ -1,82 +1,87 @@
+// lib/screens/cart_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/api_service.dart';
-import '../models/cart_item.dart';
-import '../utils/currency.dart';
-import 'checkout_screen.dart';
+import '../state/cart_provider.dart';
+import '../widgets/cart_item_tile.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final api = context.read<ApiService>();
+    final cartProvider = context.watch<CartProvider>();
+    final items = cartProvider.items;
+    final total = cartProvider.totalAmount;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Your Cart')),
-      body: FutureBuilder<List<CartItem>>(
-        future: api.getCart(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-            final items = snapshot.data!;
-            final grouped = <String, List<CartItem>>{};
-
-            for (var item in items) {
-              final name = item.listing.merchant?.name ?? 'Unknown';
-              grouped.putIfAbsent(name, () => []).add(item);
-            }
-
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: grouped.entries.map((entry) {
-                final merchant = entry.key;
-                final items = entry.value;
-                final subtotal = items.fold(0.0, (sum, i) => sum + i.listing.price * i.quantity);
-
-                return Card(
-                  child: ExpansionTile(
-                    title: Text(merchant, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text('${items.length} item${items.length > 1 ? 's' : ''}'),
+      appBar: AppBar(
+        title: const Text("Your Cart"),
+      ),
+      body: items.isEmpty
+          ? const Center(
+              child: Text(
+                "Your cart is empty",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              ),
+            )
+          : Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return CartItemTile(
+                        cartItem: item,
+                        onRemove: () => cartProvider.removeItem(item.id),
+                        onUpdateQuantity: (newQty) =>
+                            cartProvider.updateQuantity(item.id, newQty),
+                      );
+                    },
+                  ),
+                ),
+                const Divider(),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      ...items.map((item) => ListTile(
-                            title: Text(item.listing.product?.name ?? 'Unknown Product'),
-                            subtitle: Text('${formatRWF(item.listing.price)} × ${item.quantity}'),
-                            trailing: Text(formatRWF(item.listing.price * item.quantity)),
-                          )),
-                      const Divider(),
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Subtotal', style: TextStyle(fontWeight: FontWeight.bold)),
-                            Text(formatRWF(subtotal)),
-                          ],
+                      const Text(
+                        "Total:",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "RWF $total",
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.orange,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
-                );
-              }).toList(),
-            );
-          } else if (snapshot.hasData) {
-            return const Center(child: Text('Your cart is empty'));
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          return const Center(child: CircularProgressIndicator());
-        },
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        color: Colors.green,
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const CheckoutScreen()));
-          },
-          child: const Text('Proceed to Checkout', style: TextStyle(fontSize: 16)),
-        ),
-      ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/checkout');
+                    },
+                    child: const Text("Proceed to Checkout"),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }

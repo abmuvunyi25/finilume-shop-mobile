@@ -1,5 +1,13 @@
 import 'listing.dart';
 
+String _resolveUrl(String? path) {
+  if (path == null || path.isEmpty) return '';
+  if (path.startsWith('http')) return path;
+  // ensure leading slash for relative paths
+  final normalized = path.startsWith('/') ? path : '/$path';
+  return 'https://finilume-shop-backend.onrender.com$normalized';
+}
+
 class Product {
   final String id;
   final String name;
@@ -12,27 +20,18 @@ class Product {
     required this.name,
     required this.description,
     required this.imageUrl,
-    this.listings = const [],
+    required this.listings,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      id: json['id']?.toString() ?? '',
+      id: json['id'] ?? '',
       name: json['name'] ?? '',
       description: json['description'] ?? '',
-      imageUrl: json['imageUrl'] ?? '',
-      listings: (json['listings'] as List<dynamic>?)
-              ?.map((x) => Listing.fromJson(x))
-              .toList() ??
-          [],
+      imageUrl: _resolveUrl(json['imageUrl']),
+      listings: (json['listings'] as List? ?? [])
+          .map((x) => Listing.fromJson(x))
+          .toList(),
     );
   }
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'description': description,
-        'imageUrl': imageUrl,
-        'listings': listings.map((x) => x.toJson()).toList(),
-      };
 }

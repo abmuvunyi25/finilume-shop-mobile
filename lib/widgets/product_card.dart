@@ -1,72 +1,50 @@
+// lib/widgets/product_card.dart
+
 import 'package:flutter/material.dart';
 import '../models/product.dart';
-import '../utils/currency.dart';
-import 'product_detail_modal.dart'; 
 
 class ProductCard extends StatelessWidget {
   final Product product;
-  const ProductCard({super.key, required this.product});
+  final VoidCallback onTap;
+
+  const ProductCard({super.key, required this.product, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final bestPrice = product.listings.isEmpty
-        ? null
-        : product.listings.reduce((a, b) => a.price < b.price ? a : b);
-
-    return Card(
-      elevation: 4,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Image.network(
-            product.imageUrl,
-            height: 100,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              height: 100,
-              color: Colors.grey[300],
-              child: const Icon(Icons.image, color: Colors.grey),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+    return InkWell(
+      onTap: onTap,
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 4,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Hero(
+                tag: product.id,
+                child: Image.network(
+                  product.imageUrl,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
                 ),
-                const SizedBox(height: 4),
-                if (bestPrice != null)
-                  Text(
-                    '${formatRWF(bestPrice.price)} • ${bestPrice.merchant?.name ?? 'Unknown Merchant'}',
-                    style: const TextStyle(color: Colors.green, fontSize: 12),
-                  ),
-                if (bestPrice?.shipping.contains('Same-day') == true)
-                  const Chip(
-                    label: Text('Same-day', style: TextStyle(fontSize: 10)),
-                    backgroundColor: Colors.orange,
-                  ),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: () {
-                    showModalBottomSheet(  // FIXED: no "vanadium"
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => ProductDetailModal(product: product),
-                    );
-                  },
-                  child: const Text('View Offers'),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(product.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(
+                product.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.grey),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
